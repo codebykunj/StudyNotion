@@ -1,0 +1,68 @@
+//aa final correct code che je run thai che 
+const mongoose = require("mongoose");
+
+const courseSchema = new mongoose.Schema({
+    courseName: {
+        type: String,
+        trim: true,
+        required: true,
+    },
+    courseDescription: {
+        type: String,
+        trim: true,
+        required: true,
+    },
+    instructor: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true,
+    },
+    whatYouWillLearn: {
+        type: String,
+        required: true,
+    },
+    courseContent: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Section",
+    }],
+    ratingAndReviews: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "RatingAndReview",
+    }],
+    price: {
+        type: Number, // ✅ fixed to Number
+        required: true,
+    },
+    thumbnail: {
+        type: String,
+        required: true,
+    },
+    category: { 
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Category",
+        required: true,
+    },
+    tag: {
+        type: [String], // Example: ["React", "Frontend"]
+        required: true,
+    },
+    studentsEnrolled: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+    }],
+    instructions: {
+        type: [String],
+        required: true,
+    },
+    status: {
+        type: String,
+        enum: ["Draft", "Published"],
+        default: "Draft",
+    },
+    createdAt:{
+        type:Date,
+        default:Date.now
+    },
+}, { timestamps: true });
+
+module.exports = mongoose.model("Course", courseSchema);

@@ -1,0 +1,35 @@
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Light Mode Global Filter Logic */
+html.light-mode {
+  filter: invert(1) hue-rotate(180deg);
+  background-color: #f1f2ff; /* Optional tweaking to set pure bg */
+}
+
+/* Re-invert media elements so they look normal */
+html.light-mode img,
+html.light-mode video,
+html.light-mode iframe,
+html.light-mode .no-invert {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+/* Smooth transition for theme change */
+html {
+  transition: filter 0.4s ease-in-out, background-color 0.4s ease-in-out;
+}
+html img, html video, html iframe {
+  transition: filter 0.4s ease-in-out;
+}
