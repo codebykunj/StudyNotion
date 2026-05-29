@@ -261,6 +261,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { markLectureAsComplete } from '../../../services/operations/courseDetailsAPI';
 import { setCompletedLectures, updateCompletedLectures } from '../../../slices/viewCourseSlice';
+import { setUser } from '../../../slices/profileSlice';
 import ReactPlayer from 'react-player';
 import { AiFillPlayCircle } from 'react-icons/ai';
 import { Iconbtn } from '../../common/Iconbtn';
@@ -275,12 +276,15 @@ export const VideoDetails = () => {
   const location = useLocation();
   const playerRef = useRef();
   const {token} = useSelector((state)=>state.auth);
+  const {user} = useSelector((state)=>state.profile);
   const {courseSectionData,courseEntireData,completedLectures} = useSelector((state)=>state.viewCourse);
 
   const [videoData,setVideoData] = useState(null);
   const [videoEnded,setVideoEnded] = useState(false);
   const [loading,setLoading] = useState(false);
   const [playerError, setPlayerError] = useState(null);
+  const [showQuizModal, setShowQuizModal] = useState(false);
+  const [quizTriggered, setQuizTriggered] = useState(false);
 
   // Some APIs/UI paths may return the video URL under slightly different keys.
   // This makes the player resilient and prevents blank players when `videoUrl` is missing.
@@ -387,6 +391,8 @@ export const VideoDetails = () => {
   useEffect(() => {
     setPlayerError(null);
     setVideoEnded(false);
+    setQuizTriggered(false);
+    setShowQuizModal(false);
   }, [subSectionId]);
   
   const isFirstVideo = () => {
@@ -507,8 +513,11 @@ export const VideoDetails = () => {
     )
 
     //state update
-    if(res){
+    if(res && res.success !== false){
       dispatch(updateCompletedLectures(subSectionId));
+      if (res.xp && user) {
+        dispatch(setUser({ ...user, xp: res.xp }));
+      }
     }
 
 
@@ -544,11 +553,26 @@ export const VideoDetails = () => {
                                 />
                               ) : (
                                 <video
+                                  ref={playerRef}
                                   key={`${subSectionId}-native`}
                                   src={normalizedPlayerUrl || playerUrl}
                                   controls
                                   className="absolute top-0 left-0 h-full w-full object-contain"
-                                  onEnded={() => setVideoEnded(true)}
+                                  onEnded={() => {
+                                      setVideoEnded(true);
+                                      if (!completedLectures?.includes(subSectionId)) {
+                                          handelLectureCompletion();
+                                      }
+                                  }}
+                                  onTimeUpdate={(e) => {
+                                      const videoElement = e.target;
+                                      const progress = videoElement.currentTime / videoElement.duration;
+                                      if (progress >= 0.5 && !quizTriggered) {
+                                          setQuizTriggered(true);
+                                          videoElement.pause();
+                                          setShowQuizModal(true);
+                                      }
+                                  }}
                                   onError={(e) => {
                                     console.log("HTML5 <video> error:", e, {
                                       playerUrl,
@@ -615,20 +639,37 @@ export const VideoDetails = () => {
 
       <div className="mt-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <h1 className="text-3xl font-semibold">{videoData?.title}</h1>
-        {!completedLectures?.includes(subSectionId) ? (
-          <Iconbtn
-            disabled={loading}
-            onClick={() => handelLectureCompletion()}
-            text={!loading ? "Mark As Completed" : "Loading..."}
-            customClasses="text-xl"
-          />
-        ) : (
+        {completedLectures?.includes(subSectionId) && (
           <span className="text-caribbeangreen-200 font-semibold text-lg flex items-center gap-2">
             ✓ Completed
           </span>
         )}
       </div>
       <p className="pt-2 pb-6">{videoData?.description}</p>
+
+      {/* In-Video Quiz Modal */}
+      {showQuizModal && (
+          <div className="fixed inset-0 z-[1000] !mt-0 grid place-items-center overflow-auto bg-white bg-opacity-10 backdrop-blur-sm">
+              <div className="my-10 w-11/12 max-w-[500px] rounded-lg border border-richblack-400 bg-richblack-800 p-6">
+                  <h2 className="text-2xl font-bold text-yellow-50 mb-4">Mid-Video Knowledge Check</h2>
+                  <p className="text-richblack-5 mb-6">Before you continue, let's make sure you're following along!</p>
+                  
+                  <div className="flex flex-col gap-3">
+                      <p className="text-richblack-100 font-medium">What is the main topic covered in the first half of this video?</p>
+                      <button className="bg-richblack-700 hover:bg-richblack-600 text-left p-3 rounded-md transition-all text-richblack-5">A) Introduction to the subject</button>
+                      <button className="bg-richblack-700 hover:bg-richblack-600 text-left p-3 rounded-md transition-all text-richblack-5">B) Advanced practical examples</button>
+                      <button className="bg-richblack-700 hover:bg-richblack-600 text-left p-3 rounded-md transition-all text-richblack-5">C) Course conclusion and summary</button>
+                  </div>
+
+                  <button 
+                      onClick={() => setShowQuizModal(false)}
+                      className="mt-6 w-full bg-yellow-50 text-richblack-900 font-bold py-2 rounded-md hover:scale-95 transition-all"
+                  >
+                      Continue Video
+                  </button>
+              </div>
+          </div>
+      )}
 
       {/* ── Section Quiz Gate ── show quiz after last video in the section */}
       {(() => {

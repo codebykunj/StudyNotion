@@ -76,6 +76,19 @@ const userSchema = new mongoose.Schema({
     token: {
     type: String,
     },
+    // Gamification fields
+    xp: {
+        type: Number,
+        default: 0,
+    },
+    streak: {
+        type: Number,
+        default: 0,
+    },
+    lastLogin: {
+        type: Date,
+    },
+
 
 });
 

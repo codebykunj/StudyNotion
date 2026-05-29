@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { setUser } from "../../../slices/profileSlice";
 import { apiconnector } from "../../../services/apiconnector";
 import { quizEndpoints } from "../../../services/apis";
 import toast from "react-hot-toast";
@@ -7,6 +8,8 @@ import { FaClock, FaCheckCircle, FaTimesCircle, FaTrophy } from "react-icons/fa"
 
 const SectionQuiz = ({ sectionId, courseId, onQuizPassed }) => {
     const { token } = useSelector((state) => state.auth);
+    const { user } = useSelector((state) => state.profile);
+    const dispatch = useDispatch();
     const [quiz, setQuiz] = useState(null);
     const [loading, setLoading] = useState(true);
     const [alreadyPassed, setAlreadyPassed] = useState(false);
@@ -100,6 +103,9 @@ const SectionQuiz = ({ sectionId, courseId, onQuizPassed }) => {
                 setResult(response.data.data);
                 setSubmitted(true);
                 if (response.data.data.passed) {
+                    if (response.data.data.xp && user) {
+                        dispatch(setUser({ ...user, xp: response.data.data.xp }));
+                    }
                     toast.success("🎉 You passed the quiz!");
                     onQuizPassed?.();
                 } else {

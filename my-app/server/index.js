@@ -1,7 +1,15 @@
 const express = require("express");
+const http = require("http");
+const { Server } = require("socket.io");
 
 const app = express();
-
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:3000",
+    methods: ["GET", "POST"],
+  },
+});
 require("dotenv").config();
 
 const PORT = process.env.PORT || 3000;
@@ -16,7 +24,9 @@ const AdminRoutes = require("./routes/Admin");
 const QuizRoutes = require("./routes/Quiz");
 const ChatbotRoutes = require("./routes/Chatbot");
 const DiscussionRoutes = require("./routes/Discussion");
-
+const AIToolsRoutes = require("./routes/AITools");
+const AnalyticsRoutes = require("./routes/Analytics");
+const GamificationRoutes = require("./routes/Gamification");
 
 
 
@@ -73,6 +83,10 @@ app.use("/api/v1/admin", AdminRoutes);
 app.use("/api/v1/quiz", QuizRoutes);
 app.use("/api/v1/chatbot", ChatbotRoutes);
 app.use("/api/v1/discussion", DiscussionRoutes);
+app.use("/api/v1/ai-tools", AIToolsRoutes);
+app.use("/api/v1/analytics", AnalyticsRoutes);
+app.use("/api/v1/gamification", GamificationRoutes);
+
 
 // Default route
 app.use("/", (req, res) => {
@@ -83,8 +97,27 @@ app.use("/", (req, res) => {
   console.log("This is the default route")
 });
 
+// Socket.io Connection
+io.on("connection", (socket) => {
+  console.log("A user connected:", socket.id);
+
+  socket.on("join-course-room", (courseId) => {
+    socket.join(courseId);
+    console.log(`User ${socket.id} joined room ${courseId}`);
+  });
+
+  socket.on("send-message", (data) => {
+    // Broadcast to others in the room, including the sender if desired
+    io.to(data.courseId).emit("receive-message", data);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("User disconnected:", socket.id);
+  });
+});
+
 // Start server
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`App is running on port ${PORT}`);
 });
-// Trigger nodemon restart after .env change
+

@@ -43,7 +43,11 @@ exports.updateCourseProgress = async (req, res) => {
     // Save the updated course progress
     await courseProgress.save()
 
-    return res.status(200).json({ message: "Course progress updated" })
+    // Add 10 XP to user
+    const User = require("../models/User");
+    const updatedUser = await User.findByIdAndUpdate(userId, { $inc: { xp: 10 } }, { new: true });
+
+    return res.status(200).json({ message: "Course progress updated", xp: updatedUser.xp })
   } catch (error) {
     console.error(error)
     return res.status(500).json({ error: "Internal server error" })

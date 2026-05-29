@@ -156,9 +156,23 @@ exports.submitQuiz = async (req, res) => {
             attemptNumber: previousAttempts + 1,
         });
 
+        // Check if they passed it before to avoid infinite XP farming
+        const hasPassedBefore = await QuizAttempt.findOne({
+            student: studentId,
+            quiz: quizId,
+            passed: true,
+        });
+
+        let updatedXp = undefined;
+        if (passed && !hasPassedBefore) {
+            const User = require("../models/User");
+            const updatedUser = await User.findByIdAndUpdate(studentId, { $inc: { xp: 50 } }, { new: true });
+            updatedXp = updatedUser.xp;
+        }
+
         return res.status(200).json({
             success: true,
-            message: passed ? "Congratulations! You passed the quiz!" : "You did not pass. Please try again.",
+            message: passed ? "Congratulations! You passed the quiz! (+50 XP)" : "You did not pass. Please try again.",
             data: {
                 score,
                 passed,
@@ -168,6 +182,7 @@ exports.submitQuiz = async (req, res) => {
                 results, // includes correct answers + explanations after submission
                 attemptId: attempt._id,
                 attemptNumber: attempt.attemptNumber,
+                xp: updatedXp
             },
         });
     } catch (error) {

@@ -544,7 +544,6 @@ exports.login = async (request, response) => {
       });
     }
 
-    // compare password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return response.status(401).json({
@@ -552,6 +551,38 @@ exports.login = async (request, response) => {
         message: "Incorrect password",
       });
     }
+
+    // --- Gamification Streak Logic ---
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); 
+    
+    let newStreak = user.streak || 0;
+    if (user.lastLogin) {
+      const lastLoginDate = new Date(user.lastLogin);
+      lastLoginDate.setHours(0, 0, 0, 0);
+      
+      const diffTime = Math.abs(today - lastLoginDate);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays === 1) {
+        newStreak = newStreak + 1; // Logged in next day
+      } else if (diffDays > 1) {
+        newStreak = 1; // Missed a day, reset
+      }
+      // If diffDays === 0, newStreak stays the same
+    } else {
+      newStreak = 1; // First time login
+    }
+    
+    // Use findByIdAndUpdate to bypass full document validation that might fail on older documents
+    await User.findByIdAndUpdate(user._id, {
+      streak: newStreak,
+      lastLogin: new Date()
+    });
+    // Update local user object for the response
+    user.streak = newStreak;
+    user.lastLogin = new Date();
+    // ---------------------------------
 
     // create token
     const jwt = require("jsonwebtoken");
@@ -589,6 +620,7 @@ exports.login = async (request, response) => {
         user: userData,
       });
   } catch (error) {
+    console.error("Login Error:", error);
     return response.status(500).json({
       success: false,
       message: "User login failed",

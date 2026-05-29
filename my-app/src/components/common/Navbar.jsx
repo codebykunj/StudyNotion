@@ -80,6 +80,18 @@ function Navbar() {
             {theme === "dark" ? <FaSun className="text-xl" /> : <FaMoon className="text-xl text-indigo-400" />}
           </button>
 
+          {/* Gamification Stats */}
+          {user && user?.accountType === ACCOUNT_TYPE.STUDENT && (
+            <div className="flex items-center gap-x-3 border border-richblack-700 bg-richblack-800 rounded-full px-3 py-1">
+              <span className="text-sm font-semibold text-richblack-5" title="Daily Streak">
+                🔥 {user.streak || 0}
+              </span>
+              <span className="text-sm font-semibold text-yellow-50" title="Experience Points">
+                ⭐ {user.xp || 0} XP
+              </span>
+            </div>
+          )}
+
           {user && user?.accountType !== ACCOUNT_TYPE.INSTRUCTOR && (
             <Link to="/dashboard/cart" className="relative">
               <AiOutlineShoppingCart className="text-2xl text-richblack-100" />

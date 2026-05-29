@@ -8,7 +8,7 @@ const discussionSchema = new mongoose.Schema({
     },
     user: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "user",
+        ref: "User",
         required: true,
     },
     question: {
@@ -20,13 +20,30 @@ const discussionSchema = new mongoose.Schema({
         {
             user: {
                 type: mongoose.Schema.Types.ObjectId,
-                ref: "user",
+                ref: "User",
                 required: true,
             },
             answer: {
                 type: String,
                 required: true,
                 trim: true,
+            },
+            createdAt: {
+                type: Date,
+                default: Date.now,
+            }
+        }
+    ],
+    messages: [
+        {
+            user: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "User",
+                required: true,
+            },
+            message: {
+                type: String,
+                required: true,
             },
             createdAt: {
                 type: Date,
